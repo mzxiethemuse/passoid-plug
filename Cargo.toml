@@ -8,7 +8,4 @@ crate-type = ["cdylib"]
 
 [dependencies]
 nice-plug = "0.4.2"
-
-
-nice-plug-iced = { path = "../../crates/nice-plug-iced", version = "0.5.0" }
 atomic_float = "1.1"
