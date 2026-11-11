@@ -1,14 +1,25 @@
 use crate::allpass::AllPassFilter;
-use nice_plug::prelude::*;
+use crate::gui::*;
+
+use nice_plug::{editor::dpi::LogicalSize, prelude::*};
+use nice_plug_iced::{
+    IcedEditor, IcedEditorState, IcedNiceSettings, application, create_iced_editor,
+    iced::PollSubNotifier,
+};
 use std::sync::Arc;
 
-//use crate::allpass;
+const MIN_WINDOW_SIZE: LogicalSize<f32> = LogicalSize::new(400.0, 170.0);
+const RESIZE_HINT: ResizeHint = ResizeHint::non_resizable().with_min_logical_size(MIN_WINDOW_SIZE);
+const INITIAL_SCALE_FACTOR: f32 = 1.0;
 
 mod allpass;
+mod gui;
 
 pub struct PassoidPlugin {
     params: Arc<PassoidPluginParams>,
     filters: Vec<Vec<AllPassFilter>>,
+    editor_state: Arc<IcedEditorState>,
+    notifier: PollSubNotifier,
 }
 
 pub fn lerp(a: f32, b: f32, delta: f32) -> f32 {
@@ -37,6 +48,8 @@ impl Default for PassoidPlugin {
         Self {
             params: Arc::new(PassoidPluginParams::default()),
             filters: vec![vec![AllPassFilter::default(); 200]; 2],
+            editor_state: IcedEditorState::from_size(MIN_WINDOW_SIZE, INITIAL_SCALE_FACTOR),
+            notifier: PollSubNotifier::new(),
         }
     }
 }
@@ -66,7 +79,7 @@ impl Plugin for PassoidPlugin {
     const MIDI_INPUT: MidiConfig = MidiConfig::None;
     const SAMPLE_ACCURATE_AUTOMATION: bool = true;
 
-    type Editor = ();
+    type Editor = IcedEditor;
     type SysExMessage = ();
     type BackgroundTask = ();
 
@@ -102,6 +115,30 @@ impl Plugin for PassoidPlugin {
         }
 
         ProcessStatus::Normal
+    }
+
+    fn editor(&mut self, _async_executor: AsyncExecutor<Self>) -> Option<Self::Editor> {
+        create_iced_editor(
+            self.editor_state.clone(),
+            EditorState {
+                params: self.params.clone(),
+            },
+            self.notifier.clone(),
+            IcedNiceSettings::new().with_resize_hint(RESIZE_HINT),
+            |editor_state, nice_ctx| {
+                Ok(application(
+                    editor_state,
+                    nice_ctx,
+                    PassoidGui::new,
+                    PassoidGui::update,
+                    PassoidGui::view,
+                )
+                .theme(PassoidGui::theme)
+                .scale_factor(PassoidGui::scale_factor)
+                .subscription(PassoidGui::subscription)
+                .run())
+            },
+        )
     }
 
     fn deactivate(&mut self) {}

@@ -7,5 +7,7 @@ edition = "2024"
 crate-type = ["cdylib"]
 
 [dependencies]
-nice-plug = "0.4.2"
+nice-plug = { version = "0.4.2", features = ["assert_process_allocs"]}
 atomic_float = "1.1"
+nice-plug-iced = { version = "0.5.0", features = ["canvas"] }
+iced_audio = { version = "0.17.0", features = ["nice-plug"] }
