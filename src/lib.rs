@@ -42,10 +42,10 @@ impl Default for PassoidPlugin {
 }
 
 impl Plugin for PassoidPlugin {
-    const NAME: &'static str = "Passoid";
+    const NAME: &'static str = "passoid";
     const VENDOR: &'static str = "maxie";
-    const URL: &'static str = "https://youtu.be/dQw4w9WgXcQ";
-    const EMAIL: &'static str = "maxie.maxie";
+    const URL: &'static str = "https://x.com/helloiammaxie";
+    const EMAIL: &'static str = "maxie@maxie";
     const VERSION: &'static str = env!("CARGO_PKG_VERSION");
 
     const AUDIO_IO_LAYOUTS: &'static [AudioIOLayout] = &[
@@ -80,7 +80,7 @@ impl Plugin for PassoidPlugin {
         _aux: &mut AuxiliaryBuffers,
         _context: &mut impl ProcessContext<Self>,
     ) -> ProcessStatus {
-        let num_of_samples = buffer.samples();
+        //let num_of_samples = buffer.samples();
 
         let cutoff = self.params.cutoff.value() * -1.0;
         let num_of_channels = buffer.channels();
@@ -88,19 +88,18 @@ impl Plugin for PassoidPlugin {
 
         let filters = self.params.filter_count.value();
 
+        // manually iterate samples
         for channel in 0..num_of_channels {
             let filter_channel = &mut self.filters[channel];
             for samp in buffer_slice[channel].into_iter() {
                 for allpass_i in 1..filters {
+                    // go thru every filter in series
                     let allpass_filter_instance = &mut filter_channel[(allpass_i - 1) as usize];
 
                     *samp = allpass_filter_instance.process(*samp, cutoff);
                 }
-                //for allpass_filter_instance in filter_channel.into_iter() {}
             }
         }
-
-        return ProcessStatus::Normal;
 
         ProcessStatus::Normal
     }
@@ -110,16 +109,25 @@ impl Plugin for PassoidPlugin {
 
 impl ClapPlugin for PassoidPlugin {
     const CLAP_ID: &'static str = "net.mzxie.passoid";
-    const CLAP_DESCRIPTION: Option<&'static str> = Some("maxieplug");
+    const CLAP_DESCRIPTION: Option<&'static str> = Some("many allpass filters");
     const CLAP_MANUAL_URL: Option<&'static str> = Some(Self::URL);
     const CLAP_SUPPORT_URL: Option<&'static str> = None;
-    const CLAP_FEATURES: &'static [ClapFeature] = &[ClapFeature::AudioEffect, ClapFeature::Stereo];
+    const CLAP_FEATURES: &'static [ClapFeature] = &[
+        ClapFeature::AudioEffect,
+        ClapFeature::Stereo,
+        ClapFeature::Filter,
+        ClapFeature::Utility,
+    ];
 }
 
 impl Vst3Plugin for PassoidPlugin {
-    const VST3_CLASS_ID: [u8; 16] = *b"MyMaxiePassin001";
-    const VST3_SUBCATEGORIES: &'static [Vst3SubCategory] =
-        &[Vst3SubCategory::Fx, Vst3SubCategory::Tools];
+    const VST3_CLASS_ID: [u8; 16] = *b"MaxiePassoid0123";
+    const VST3_SUBCATEGORIES: &'static [Vst3SubCategory] = &[
+        Vst3SubCategory::Fx,
+        Vst3SubCategory::Tools,
+        Vst3SubCategory::Filter,
+        Vst3SubCategory::Modulation,
+    ];
 }
 
 nice_export_clap!(PassoidPlugin);

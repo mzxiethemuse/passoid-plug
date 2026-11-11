@@ -1,3 +1,4 @@
+/// Single order allpass filter.
 pub struct AllPassFilter {
     last_in: f32,
     last_out: f32,
@@ -26,6 +27,7 @@ impl Clone for AllPassFilter {
 }
 
 impl AllPassFilter {
+    /// Processes a sample into the allpass filter with the given cutoff.
     pub fn process(&mut self, sample: f32, cutoff: f32) -> f32 {
         /*
          * (cutoff * *sample) + (self.prev_sample_l - (cutoff * self.prev_out_l));
